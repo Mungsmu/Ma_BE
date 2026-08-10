@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인</title>
+    <style>
+        body { font-family: -apple-system, "Malgun Gothic", sans-serif; background: #f4f6f9; }
+        .card { max-width: 360px; margin: 80px auto; background: #fff; padding: 32px;
+                border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+        h1 { font-size: 22px; text-align: center; margin-bottom: 24px; }
+        label { display: block; font-size: 13px; color: #555; margin: 12px 0 4px; }
+        input { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ddd;
+                border-radius: 8px; font-size: 14px; }
+        button { width: 100%; margin-top: 20px; padding: 12px; border: 0; border-radius: 8px;
+                 background: #3b82f6; color: #fff; font-size: 15px; cursor: pointer; }
+        button:hover { background: #2563eb; }
+        .alert { padding: 10px 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
+        .alert-err { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
+        .alert-ok  { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; }
+        .sub { text-align: center; margin-top: 16px; font-size: 13px; }
+        .sub a { color: #3b82f6; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>로그인</h1>
+
+    <!-- 로그인 실패 메시지 -->
+    <div class="alert alert-err" th:if="${param.error}">
+        아이디 또는 비밀번호가 올바르지 않습니다.
+    </div>
+
+    <!-- 로그아웃 완료 메시지 -->
+    <div class="alert alert-ok" th:if="${param.logout}">
+        로그아웃 되었습니다.
+    </div>
+
+    <!--
+        th:action 을 사용하면 Thymeleaf 가 CSRF 토큰을 hidden input 으로 자동 삽입.
+        Spring Security 는 POST /login 을 가로채 인증 처리한다.
+    -->
+    <form th:action="@{/login}" method="post">
+        <label for="username">아이디</label>
+        <input type="text" id="username" name="username" placeholder="아이디를 입력하세요" autofocus>
+
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" name="password" placeholder="비밀번호를 입력하세요">
+
+        <button type="submit">로그인</button>
+    </form>
+    <p class="sub">아직 회원이 아니신가요? <a th:href="@{/signup}">회원가입</a></p>
+</div>
+</body>
+</html>

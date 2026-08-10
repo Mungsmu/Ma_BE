@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>홈</title>
+    <style>
+        body { font-family: -apple-system, "Malgun Gothic", sans-serif; background: #f4f6f9; }
+        header { background: #fff; padding: 0 24px; height: 56px; display: flex;
+                 align-items: center; justify-content: space-between;
+                 box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+        header .logo { font-size: 18px; font-weight: 700; color: #3b82f6; }
+        header .user  { font-size: 14px; color: #555; display: flex; align-items: center; gap: 12px; }
+        .main { max-width: 720px; margin: 48px auto; padding: 0 16px; }
+        .welcome { background: #fff; border-radius: 12px; padding: 40px;
+                   box-shadow: 0 4px 20px rgba(0,0,0,.06); text-align: center; }
+        .welcome h2 { font-size: 24px; margin-bottom: 8px; }
+        .welcome p  { color: #6b7280; }
+        form button {
+            display: inline-block; margin-top: 0; padding: 8px 20px; background: #ef4444;
+            color: #fff; border: 0; border-radius: 8px; cursor: pointer; font-size: 14px;
+        }
+        form button:hover { background: #dc2626; }
+    </style>
+</head>
+<body>
+<header>
+    <span class="logo">Demo App</span>
+    <div class="user">
+        <span th:text="'안녕하세요, ' + ${username} + '님'"></span>
+        <!-- th:action 으로 CSRF 토큰 자동 삽입, POST /logout 을 Security 가 처리 -->
+        <form th:action="@{/logout}" method="post">
+            <button type="submit">로그아웃</button>
+        </form>
+    </div>
+</header>
+
+<div class="main">
+    <div class="welcome">
+        <h2 th:text="${username} + '님, 환영합니다!'"></h2>
+        <p>로그인에 성공했습니다.</p>
+    </div>
+</div>
+</body>
+</html>

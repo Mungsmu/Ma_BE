@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입</title>
+    <style>
+        body { font-family: -apple-system, "Malgun Gothic", sans-serif; background: #f4f6f9; }
+        .card { max-width: 420px; margin: 40px auto; background: #fff; padding: 32px;
+                border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+        h1 { font-size: 22px; text-align: center; margin-bottom: 8px; }
+        h2 { font-size: 15px; margin: 24px 0 4px; color: #333; border-top: 1px solid #eee; padding-top: 16px; }
+        label { display: block; font-size: 13px; color: #555; margin: 12px 0 4px; }
+        input, select { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ddd;
+                        border-radius: 8px; font-size: 14px; }
+        .row { display: flex; gap: 8px; }
+        .row input { flex: 1; }
+        .row button { flex: 0 0 auto; white-space: nowrap; padding: 0 14px; }
+        button.small { background: #6b7280; color: #fff; border: 0; border-radius: 8px;
+                       cursor: pointer; font-size: 13px; }
+        button.submit { width: 100%; margin-top: 24px; padding: 12px; border: 0; border-radius: 8px;
+                        background: #3b82f6; color: #fff; font-size: 15px; cursor: pointer; }
+        button.submit:hover { background: #2563eb; }
+        .hint { font-size: 12px; margin-top: 4px; min-height: 16px; }
+        .ok  { color: #16a34a; }
+        .err { color: #dc2626; }
+        .sub { text-align: center; margin-top: 16px; font-size: 13px; }
+        .sub a { color: #3b82f6; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>회원가입</h1>
+
+    <h2>기본 정보</h2>
+    <label>이름</label>
+    <input type="text" id="name" placeholder="홍길동">
+
+    <label>전화번호</label>
+    <input type="text" id="phone" placeholder="010-1234-5678">
+
+    <label>이메일</label>
+    <input type="email" id="email" placeholder="example@email.com">
+
+    <label>아이디</label>
+    <div class="row">
+        <input type="text" id="username" placeholder="영문/숫자 4~20자">
+        <button type="button" class="small" onclick="checkUsername()">중복확인</button>
+    </div>
+    <div class="hint" id="usernameHint"></div>
+
+    <label>비밀번호</label>
+    <input type="password" id="password" placeholder="영문+숫자 8자 이상" oninput="checkPasswordMatch()">
+
+    <label>비밀번호 확인</label>
+    <input type="password" id="passwordConfirm" placeholder="비밀번호를 다시 입력하세요" oninput="checkPasswordMatch()">
+    <div class="hint" id="passwordHint"></div>
+
+    <h2>보호자 정보 <span style="font-size:12px;color:#9ca3af;">(길찾기 시 SMS 알림 발송)</span></h2>
+    <label>보호자 이름</label>
+    <input type="text" id="guardianName" placeholder="보호자 성함">
+
+    <label>보호자 전화번호</label>
+    <input type="text" id="guardianPhone" placeholder="010-0000-0000">
+
+    <label>관계</label>
+    <select id="guardianRelation">
+        <option value="">선택</option>
+        <option value="부">부</option>
+        <option value="모">모</option>
+        <option value="자녀">자녀</option>
+        <option value="배우자">배우자</option>
+        <option value="형제자매">형제자매</option>
+        <option value="기타">기타</option>
+    </select>
+
+    <button type="button" class="submit" onclick="signup()">가입하기</button>
+    <p class="sub"><a th:href="@{/login}">로그인으로 돌아가기</a></p>
+</div>
+
+<script>
+    let usernameChecked = false;
+
+    function checkPasswordMatch() {
+        const pw  = document.getElementById('password').value;
+        const pw2 = document.getElementById('passwordConfirm').value;
+        const hint = document.getElementById('passwordHint');
+        if (!pw2) { hint.textContent = ''; return; }
+        if (pw === pw2) {
+            hint.className = 'hint ok';
+            hint.textContent = '비밀번호가 일치합니다.';
+        } else {
+            hint.className = 'hint err';
+            hint.textContent = '비밀번호가 일치하지 않습니다.';
+        }
+    }
+
+    async function checkUsername() {
+        const username = document.getElementById('username').value.trim();
+        const hint = document.getElementById('usernameHint');
+        if (!username) { hint.className = 'hint err'; hint.textContent = '아이디를 입력하세요.'; return; }
+
+        const res = await fetch('/api/members/check-username?username=' + encodeURIComponent(username));
+        const body = await res.json();
+        const available = body.data && body.data.available;
+        usernameChecked = available;
+        hint.className = 'hint ' + (available ? 'ok' : 'err');
+        hint.textContent = body.message;
+    }
+
+    async function signup() {
+        if (!usernameChecked) { alert('아이디 중복확인을 해주세요.'); return; }
+
+        const pw  = document.getElementById('password').value;
+        const pw2 = document.getElementById('passwordConfirm').value;
+        if (pw !== pw2) { alert('비밀번호가 일치하지 않습니다.'); return; }
+
+        const payload = {
+            name:            document.getElementById('name').value.trim(),
+            phone:           document.getElementById('phone').value.trim(),
+            email:           document.getElementById('email').value.trim(),
+            username:        document.getElementById('username').value.trim(),
+            password:        pw,
+            passwordConfirm: pw2,
+            guardianName:    document.getElementById('guardianName').value.trim(),
+            guardianPhone:   document.getElementById('guardianPhone').value.trim(),
+            guardianRelation:document.getElementById('guardianRelation').value
+        };
+
+        const res = await fetch('/api/members/signup', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(data.message);
+            window.location.href = '/login';
+        } else {
+            alert(data.message);
+        }
+    }
+</script>
+</body>
+</html>
