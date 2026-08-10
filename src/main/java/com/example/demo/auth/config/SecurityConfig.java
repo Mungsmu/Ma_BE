@@ -1,0 +1,68 @@
+package com.example.demo.auth.config;
+
+import com.example.demo.auth.jwt.JwtAuthenticationFilter;
+import com.example.demo.auth.jwt.JwtTokenProvider;
+import com.example.demo.auth.service.MemberUserDetailsService;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+/**
+ * JWT 기반 stateless 인증.
+ * 세션/쿠키를 쓰지 않으므로 CSRF 필터가 필요 없다 — 예전에 "/api/**"를 필터 체인에서 통째로
+ * 우회시켰던 이유(CSRF가 POST를 막는 문제) 자체가 사라졌다.
+ */
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    /** H2 콘솔은 개발 편의 도구라 Security 필터 체인 자체를 우회. */
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return web -> web.ignoring().requestMatchers("/h2-console/**");
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtTokenProvider jwtTokenProvider,
+                                           MemberUserDetailsService memberUserDetailsService) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                        "/api/auth/login",
+                        "/api/members/signup",
+                        "/api/members/check-username",
+                        "/api/sms/**"
+                ).permitAll()
+                .anyRequest().authenticated()
+            )
+            // 토큰이 없거나 무효할 때 기본값(403) 대신 401을 반환
+            .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"success\":false,\"message\":\"인증이 필요합니다.\",\"data\":null}");
+            }))
+            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, memberUserDetailsService),
+                    UsernamePasswordAuthenticationFilter.class)
+            // H2 콘솔의 iframe 허용
+            .headers(headers -> headers
+                .frameOptions(frameOptions -> frameOptions.sameOrigin())
+            );
+
+        return http.build();
+    }
+}
