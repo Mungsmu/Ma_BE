@@ -34,8 +34,8 @@ public class Member {
     @Column(nullable = false, length = 50)
     private String name;
 
-    /** 전화번호 */
-    @Column(nullable = false, length = 20)
+    /** 전화번호 (SMS 인증 대상, 중복 불가) */
+    @Column(nullable = false, unique = true, length = 20)
     private String phone;
 
     /** 이메일 */

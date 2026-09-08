@@ -44,6 +44,10 @@ public class MemberService {
             throw new DuplicateUsernameException("이미 사용 중인 아이디입니다.");
         }
 
+        if (memberRepository.existsByPhone(request.phone())) {
+            throw new DuplicatePhoneException("이미 가입된 전화번호입니다.");
+        }
+
         Guardian guardian = new Guardian(
                 request.guardianName(),
                 request.guardianPhone(),

@@ -2,6 +2,7 @@ package com.example.demo.common.exception;
 
 import com.example.demo.auth.sms.SmsNotVerifiedException;
 import com.example.demo.common.dto.ApiResponse;
+import com.example.demo.user.service.DuplicatePhoneException;
 import com.example.demo.user.service.DuplicateUsernameException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
@@ -39,6 +40,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateUsernameException.class)
     public ResponseEntity<ApiResponse<Void>> handleDuplicate(DuplicateUsernameException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.fail(e.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicatePhoneException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDuplicatePhone(DuplicatePhoneException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.fail(e.getMessage()));
     }
 
