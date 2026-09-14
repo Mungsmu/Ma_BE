@@ -14,6 +14,11 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 /**
  * JWT 기반 stateless 인증.
@@ -35,10 +40,31 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+    /**
+     * 모바일 앱(Expo)/배포 도메인에서 호출할 수 있도록 모든 origin을 허용한다 (개발 단계 설정).
+     * 쿠키 인증을 쓰지 않고 JWT를 Authorization 헤더로만 주고받으므로 allowCredentials는 false로 둬도 된다
+     * — 그래서 "*" origin과 함께 써도 Spring Security 제약에 걸리지 않는다.
+     * 배포 전에는 실제 프론트 도메인으로 좁혀야 한다.
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(false);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtTokenProvider jwtTokenProvider,
-                                           MemberUserDetailsService memberUserDetailsService) throws Exception {
+                                           MemberUserDetailsService memberUserDetailsService,
+                                           CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth

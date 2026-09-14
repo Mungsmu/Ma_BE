@@ -1,6 +1,7 @@
 package com.example.demo.user.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 /**
@@ -25,6 +26,9 @@ public record UpdateMemberRequest(
         String guardianPhone,
 
         @NotBlank(message = "보호자와의 관계를 입력해 주세요.")
-        String guardianRelation
+        String guardianRelation,
+
+        @NotNull(message = "보호자 알림 사용 여부를 선택해 주세요.")
+        Boolean guardianAlertEnabled
 ) {
 }
