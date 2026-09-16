@@ -5,6 +5,7 @@ import com.example.demo.route.dto.Coordinate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 경로가 터널 구간에 근접하는지 판단하는 기하 계산.
@@ -19,15 +20,20 @@ public class TunnelAvoidanceChecker {
 
     /** 경로의 어느 구간이든 버퍼 거리(m) 이내로 터널 구간에 근접하면 true. */
     public boolean passesThroughTunnel(List<Coordinate> path, List<Tunnel> tunnels, double bufferMeters) {
+        return findFirstIntersectedTunnel(path, tunnels, bufferMeters).isPresent();
+    }
+
+    /** 경로를 따라가면서 버퍼 거리 안으로 처음 근접하는 터널을 찾는다 (출발지 쪽에 가까운 순서). */
+    public Optional<Tunnel> findFirstIntersectedTunnel(List<Coordinate> path, List<Tunnel> tunnels, double bufferMeters) {
         if (path.isEmpty() || tunnels.isEmpty()) {
-            return false;
+            return Optional.empty();
         }
         for (int i = 0; i < path.size() - 1; i++) {
             Coordinate from = path.get(i);
             Coordinate to = path.get(i + 1);
             for (Tunnel tunnel : tunnels) {
                 if (segmentDistanceMeters(from, to, tunnel) <= bufferMeters) {
-                    return true;
+                    return Optional.of(tunnel);
                 }
             }
         }
@@ -35,11 +41,11 @@ public class TunnelAvoidanceChecker {
         if (path.size() == 1) {
             for (Tunnel tunnel : tunnels) {
                 if (segmentDistanceMeters(path.get(0), path.get(0), tunnel) <= bufferMeters) {
-                    return true;
+                    return Optional.of(tunnel);
                 }
             }
         }
-        return false;
+        return Optional.empty();
     }
 
     private double segmentDistanceMeters(Coordinate from, Coordinate to, Tunnel tunnel) {

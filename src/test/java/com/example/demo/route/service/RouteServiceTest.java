@@ -1,5 +1,6 @@
 package com.example.demo.route.service;
 
+import com.example.demo.route.client.KakaoApiException;
 import com.example.demo.route.client.KakaoDirectionsClient;
 import com.example.demo.route.client.KakaoDirectionsClient.RouteCandidate;
 import com.example.demo.route.domain.Tunnel;
@@ -16,6 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,7 +39,7 @@ class RouteServiceTest {
     @BeforeEach
     void setUp() {
         routeService = new RouteService(kakaoDirectionsClient, tunnelRepository,
-                new TunnelAvoidanceChecker(), bufferMeters);
+                new TunnelAvoidanceChecker(), new TunnelDetourCalculator(), bufferMeters);
     }
 
     @Test
@@ -88,5 +91,39 @@ class RouteServiceTest {
 
         assertThatThrownBy(() -> routeService.findRoute(1, 2, 3, 4))
                 .isInstanceOf(RouteNotFoundException.class);
+    }
+
+    @Test
+    void 유일한_경로가_터널을_지나도_경유지_우회로_피할_수_있으면_그걸_선택한다() {
+        // 카카오가 대안 경로를 하나만 주는 실사용 케이스 (실제 연동 테스트에서 항상 이랬음)
+        RouteCandidate onlyCandidate = new RouteCandidate(1000, 100,
+                List.of(new Coordinate(38.14672, 128.093106), new Coordinate(38.144841, 128.086935)));
+        when(kakaoDirectionsClient.findRoutes(1, 2, 3, 4)).thenReturn(List.of(onlyCandidate));
+        when(tunnelRepository.findAll()).thenReturn(List.of(tunnel));
+
+        RouteCandidate detourResult = new RouteCandidate(1800, 200,
+                List.of(new Coordinate(38.300000, 128.300000)));
+        when(kakaoDirectionsClient.findRoutes(eq(1.0), eq(2.0), eq(3.0), eq(4.0), any(Coordinate.class)))
+                .thenReturn(List.of(detourResult));
+
+        RouteResponse response = routeService.findRoute(1, 2, 3, 4);
+
+        assertThat(response.tunnelAvoided()).isTrue();
+        assertThat(response.distanceMeters()).isEqualTo(1800);
+    }
+
+    @Test
+    void 경유지_우회_요청이_실패해도_최단경로로_안전하게_대체된다() {
+        RouteCandidate onlyCandidate = new RouteCandidate(1000, 100,
+                List.of(new Coordinate(38.14672, 128.093106), new Coordinate(38.144841, 128.086935)));
+        when(kakaoDirectionsClient.findRoutes(1, 2, 3, 4)).thenReturn(List.of(onlyCandidate));
+        when(tunnelRepository.findAll()).thenReturn(List.of(tunnel));
+        when(kakaoDirectionsClient.findRoutes(eq(1.0), eq(2.0), eq(3.0), eq(4.0), any(Coordinate.class)))
+                .thenThrow(new KakaoApiException("카카오 길찾기 API 호출에 실패했습니다.", new RuntimeException("boom")));
+
+        RouteResponse response = routeService.findRoute(1, 2, 3, 4);
+
+        assertThat(response.tunnelAvoided()).isFalse();
+        assertThat(response.distanceMeters()).isEqualTo(1000);
     }
 }

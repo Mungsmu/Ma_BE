@@ -5,6 +5,7 @@ import com.example.demo.route.dto.Coordinate;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -73,5 +74,28 @@ class TunnelAvoidanceCheckerTest {
         boolean result = checker.passesThroughTunnel(crossingPath, List.of(eastWestTunnel), 30);
 
         assertThat(result).isTrue();
+    }
+
+    @Test
+    void 경로를_따라_처음_만나는_터널을_찾는다() {
+        Tunnel farTunnel = new Tunnel("t2", "먼터널", 38.300000, 128.300000, 38.301000, 128.301000);
+        List<Coordinate> path = List.of(
+                new Coordinate(38.150000, 128.100000), // 출발
+                new Coordinate(38.14672, 128.093106),  // 광치터널 근접 (먼저 만남)
+                new Coordinate(38.300000, 128.300000)  // 먼터널 근접 (나중에 만남)
+        );
+
+        Optional<Tunnel> result = checker.findFirstIntersectedTunnel(path, List.of(farTunnel, tunnel), 30);
+
+        assertThat(result).contains(tunnel);
+    }
+
+    @Test
+    void 근접한_터널이_없으면_빈_Optional을_반환한다() {
+        List<Coordinate> path = List.of(new Coordinate(38.300000, 128.300000));
+
+        Optional<Tunnel> result = checker.findFirstIntersectedTunnel(path, List.of(tunnel), 30);
+
+        assertThat(result).isEmpty();
     }
 }

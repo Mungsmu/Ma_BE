@@ -25,14 +25,25 @@ public class KakaoDirectionsClient {
     }
 
     public List<RouteCandidate> findRoutes(double originLat, double originLng, double destLat, double destLng) {
+        return findRoutes(originLat, originLng, destLat, destLng, null);
+    }
+
+    /** waypoint가 주어지면 그 지점을 반드시 거쳐가는 경로를 요청한다 — 터널 우회를 유도할 때 사용. */
+    public List<RouteCandidate> findRoutes(double originLat, double originLng, double destLat, double destLng,
+                                            Coordinate waypoint) {
         JsonNode body;
         try {
             body = restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .queryParam("origin", originLng + "," + originLat)
-                            .queryParam("destination", destLng + "," + destLat)
-                            .queryParam("alternatives", true)
-                            .build())
+                    .uri(uriBuilder -> {
+                        uriBuilder
+                                .queryParam("origin", originLng + "," + originLat)
+                                .queryParam("destination", destLng + "," + destLat)
+                                .queryParam("alternatives", true);
+                        if (waypoint != null) {
+                            uriBuilder.queryParam("waypoints", waypoint.lng() + "," + waypoint.lat());
+                        }
+                        return uriBuilder.build();
+                    })
                     .header("Authorization", "KakaoAK " + apiKey)
                     .retrieve()
                     .body(JsonNode.class);
