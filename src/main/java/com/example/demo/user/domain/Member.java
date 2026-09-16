@@ -46,6 +46,10 @@ public class Member {
     @Embedded
     private Guardian guardian;
 
+    /** 길안내 시작/터널 진입·통과 시 보호자에게 SMS 알림을 보낼지 여부 (마이페이지 토글) */
+    @Column(nullable = false)
+    private boolean guardianAlertEnabled;
+
     private LocalDateTime createdAt;
 
     protected Member() {
@@ -59,6 +63,7 @@ public class Member {
         this.phone = phone;
         this.email = email;
         this.guardian = guardian;
+        this.guardianAlertEnabled = true;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -67,11 +72,12 @@ public class Member {
         return new Member(username, encodedPassword, name, phone, email, guardian);
     }
 
-    /** 이름/전화번호/보호자 정보 수정. 아이디·비밀번호·이메일은 이 메서드로 바꿀 수 없다. */
-    public void updateProfile(String name, String phone, Guardian guardian) {
+    /** 이름/전화번호/보호자 정보/보호자 알림 여부 수정. 아이디·비밀번호·이메일은 이 메서드로 바꿀 수 없다. */
+    public void updateProfile(String name, String phone, Guardian guardian, boolean guardianAlertEnabled) {
         this.name = name;
         this.phone = phone;
         this.guardian = guardian;
+        this.guardianAlertEnabled = guardianAlertEnabled;
     }
 
     public Long getId() {
@@ -100,6 +106,10 @@ public class Member {
 
     public Guardian getGuardian() {
         return guardian;
+    }
+
+    public boolean isGuardianAlertEnabled() {
+        return guardianAlertEnabled;
     }
 
     public LocalDateTime getCreatedAt() {

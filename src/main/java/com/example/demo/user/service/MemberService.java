@@ -77,7 +77,7 @@ public class MemberService {
     public MemberResponse updateMyInfo(String username, UpdateMemberRequest request) {
         Member member = findByUsername(username);
         Guardian guardian = new Guardian(request.guardianName(), request.guardianPhone(), request.guardianRelation());
-        member.updateProfile(request.name(), request.phone(), guardian);
+        member.updateProfile(request.name(), request.phone(), guardian, request.guardianAlertEnabled());
         return MemberResponse.from(member);
     }
 

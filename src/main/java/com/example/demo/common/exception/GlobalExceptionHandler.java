@@ -2,6 +2,11 @@ package com.example.demo.common.exception;
 
 import com.example.demo.auth.sms.SmsNotVerifiedException;
 import com.example.demo.common.dto.ApiResponse;
+import com.example.demo.route.client.KakaoApiException;
+import com.example.demo.route.service.RouteNotFoundException;
+import com.example.demo.trip.service.TripAccessDeniedException;
+import com.example.demo.trip.service.TripNotActiveException;
+import com.example.demo.trip.service.TripNotFoundException;
 import com.example.demo.user.service.DuplicatePhoneException;
 import com.example.demo.user.service.DuplicateUsernameException;
 import jakarta.validation.ConstraintViolationException;
@@ -62,6 +67,31 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalArg(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
+    }
+
+    @ExceptionHandler(RouteNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRouteNotFound(RouteNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.fail(e.getMessage()));
+    }
+
+    @ExceptionHandler(KakaoApiException.class)
+    public ResponseEntity<ApiResponse<Void>> handleKakaoApi(KakaoApiException e) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(ApiResponse.fail(e.getMessage()));
+    }
+
+    @ExceptionHandler(TripNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTripNotFound(TripNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.fail(e.getMessage()));
+    }
+
+    @ExceptionHandler(TripAccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTripAccessDenied(TripAccessDeniedException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.fail(e.getMessage()));
+    }
+
+    @ExceptionHandler(TripNotActiveException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTripNotActive(TripNotActiveException e) {
         return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
     }
 }

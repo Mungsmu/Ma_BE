@@ -14,6 +14,7 @@ public record MemberResponse(
         String guardianName,
         String guardianPhone,
         String guardianRelation,
+        boolean guardianAlertEnabled,
         LocalDateTime createdAt
 ) {
     public static MemberResponse from(Member member) {
@@ -26,6 +27,7 @@ public record MemberResponse(
                 member.getGuardian().getName(),
                 member.getGuardian().getPhone(),
                 member.getGuardian().getRelation(),
+                member.isGuardianAlertEnabled(),
                 member.getCreatedAt()
         );
     }
