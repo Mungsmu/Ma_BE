@@ -44,6 +44,7 @@ public class SmsVerificationService {
     private final long lookupWindowMinutes;
     private final long retentionHours;
     private final int octomoWithinMinutes;
+    private final String devBypassPhone;
 
     private final SecureRandom random = new SecureRandom();
     private final ConcurrentHashMap<String, CodeEntry> store = new ConcurrentHashMap<>();
@@ -52,12 +53,14 @@ public class SmsVerificationService {
                                   @Value("${app.sms.code-ttl-seconds:180}") long codeTtlSeconds,
                                   @Value("${app.sms.code-lookup-window-minutes:30}") long lookupWindowMinutes,
                                   @Value("${app.sms.code-retention-hours:24}") long retentionHours,
-                                  @Value("${app.octomo.within-minutes:5}") int octomoWithinMinutes) {
+                                  @Value("${app.octomo.within-minutes:5}") int octomoWithinMinutes,
+                                  @Value("${app.sms.dev-bypass-phone:}") String devBypassPhone) {
         this.octomoClient = octomoClient;
         this.codeTtlSeconds = codeTtlSeconds;
         this.lookupWindowMinutes = lookupWindowMinutes;
         this.retentionHours = retentionHours;
         this.octomoWithinMinutes = octomoWithinMinutes;
+        this.devBypassPhone = devBypassPhone.isBlank() ? null : normalize(devBypassPhone);
     }
 
     /** 인증코드를 생성해 저장하고 반환한다. (문자 발송 없음 — 코드를 화면에 보여주기 위해 반환) */
@@ -90,6 +93,10 @@ public class SmsVerificationService {
 
     private boolean check(String phone, Purpose purpose, boolean consume) {
         String key = normalize(phone);
+        // ponytail: 개발용 전역 우회 번호 하나뿐 — 실제 계정별 플래그가 필요해지면 Member에 컬럼 추가
+        if (key.equals(devBypassPhone)) {
+            return true;
+        }
         CodeEntry entry = findValidEntry(key, purpose);
         if (entry == null) {
             return false;

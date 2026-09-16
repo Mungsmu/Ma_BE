@@ -10,7 +10,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -28,12 +27,6 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
-    /** H2 콘솔은 개발 편의 도구라 Security 필터 체인 자체를 우회. */
-    @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return web -> web.ignoring().requestMatchers("/h2-console/**");
-    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
@@ -73,7 +66,8 @@ public class SecurityConfig {
                         "/api/members/signup",
                         "/api/members/check-username",
                         "/api/sms/send",
-                        "/api/sms/verify"
+                        "/api/sms/verify",
+                        "/api/tour/**"
                 ).permitAll()
                 // /api/sms/guardian/** 는 명단에 없으므로 anyRequest().authenticated() 로 자동 인증 대상 —
                 // 보호자 인증은 본인 인증(로그인)을 마친 회원만 요청 가능해야 하므로 의도적으로 공개하지 않는다.
@@ -86,11 +80,7 @@ public class SecurityConfig {
                 response.getWriter().write("{\"success\":false,\"message\":\"인증이 필요합니다.\",\"data\":null}");
             }))
             .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, memberUserDetailsService),
-                    UsernamePasswordAuthenticationFilter.class)
-            // H2 콘솔의 iframe 허용
-            .headers(headers -> headers
-                .frameOptions(frameOptions -> frameOptions.sameOrigin())
-            );
+                    UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
