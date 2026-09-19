@@ -35,3 +35,8 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+// Docker 빌드 시 build/libs/*.jar 가 실행 가능한 jar 하나만 나오도록 plain jar 생성을 끈다
+tasks.named('jar') {
+	enabled = false
+}
